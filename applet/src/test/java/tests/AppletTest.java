@@ -54,7 +54,7 @@ public class AppletTest extends BaseTest {
         //Only one connect, so it does not reset cards data
         final CardManager manager = connect();
 
-        byte[] test = {0x70, 0x73, 0x62, 0x74, (byte) 0xFF, 0x6d, 0x61, 0x72, 0x63, 0x6f};
+        byte[] test = {0x72, 0x73, 0x62, 0x74, (byte) 0xFF, 0x6d, 0x61, 0x72, 0x63, 0x6f};
         final CommandAPDU cmd = new CommandAPDU(0xB0, 0x51, 0,0, test);
         final ResponseAPDU response = manager.transmit(cmd);
         Assert.assertEquals(0x9000, response.getSW());
