@@ -1,8 +1,6 @@
 package applet;
 
 import javacard.framework.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class MainApplet extends Applet implements MultiSelectable {
     final static byte CLA_MAINAPPLET = (byte) 0xB0;
@@ -93,6 +91,23 @@ public class MainApplet extends Applet implements MultiSelectable {
 
     }
 
+/* I wanted to use NIO, but it is supported only by JC 3.1, so I decided to use this SO answer
+    https://stackoverflow.com/questions/14827398/converting-byte-array-values-in-little-endian-order-to-short-values
+    There are some minor modifications for JC
+*/
+    public static short byteArrayToShortLE(final byte[] b, final short offset)
+
+    {
+        short value = 0;
+        for (short i = 0; i < 2; i++)
+        {
+            value |= (b[(short) (i + offset)] & 0x000000FF) << (i * 8);
+        }
+
+        return value;
+    }
+
+
     void Test(APDU apdu) {
         byte[] apdubuf = apdu.getBuffer();
         short randomDataLen = (short) 20;
@@ -110,32 +125,25 @@ public class MainApplet extends Applet implements MultiSelectable {
         byte key_lengthb = psbt[index];
         //so we dont read the keylength in copying
         index++;
-        //https://stackoverflow.com/questions/14827398/converting-byte-array-values-in-little-endian-order-to-short-values
+        //
         switch (key_lengthb) {
             case (byte) 0xfd: {
                 byte[] buf = new byte[2];
-                Util.arrayCopyNonAtomic(psbt, index, buf, (short) 0, (short) 2);
-                ByteBuffer bb = ByteBuffer.wrap(buf);
-                bb.order(ByteOrder.LITTLE_ENDIAN);
+
                 offsetChange = 3;
-                return bb.getShort();
+                return byteArrayToShortLE(psbt, index);
+
             }
             case (byte) 0xfe: {
-                byte[] buf = new byte[4];
-                Util.arrayCopyNonAtomic(psbt, index, buf, (short) 0, (short) 4);
-                ByteBuffer bb = ByteBuffer.wrap(buf);
-                bb.order(ByteOrder.LITTLE_ENDIAN);
+
                 offsetChange = 5;
-                return bb.getShort();
+                return byteArrayToShortLE(psbt, index);
 
             }
             case (byte) 0xff: {
-                byte[] buf = new byte[8];
-                Util.arrayCopyNonAtomic(psbt, index, buf, (short) 0, (short) 8);
-                ByteBuffer bb = ByteBuffer.wrap(buf);
-                bb.order(ByteOrder.LITTLE_ENDIAN);
+
                 offsetChange = 9;
-                return bb.getShort();
+                return byteArrayToShortLE(psbt, index);
             }
             default:
                 offsetChange = 1;
@@ -233,7 +241,7 @@ public class MainApplet extends Applet implements MultiSelectable {
         //cycle until end of data in APDU
         short transaction_index = 0;
         //As the part to send PSBT to card is not implemented, we can not use offset here, only size of the hardcoded data
-        while (currentArrayIndex < psbt.length - 1) {
+        while (currentArrayIndex < (short) (psbt.length - 1)) {
             short keylen = GetLength(currentArrayIndex);
             currentArrayIndex += offsetChange;
 
@@ -254,7 +262,7 @@ public class MainApplet extends Applet implements MultiSelectable {
                 KeyType = key[0];
 
                 if (keylen > 1) {
-                    byte[] keyData = new byte[keylen - 1];
+                    byte[] keyData = new byte[(short) (keylen - 1)];
                     Util.arrayCopyNonAtomic(psbt, currentArrayIndex, keyData, (short) 0, (short) (keylen - 1));
                     currentArrayIndex += keylen - 1;
                 }
