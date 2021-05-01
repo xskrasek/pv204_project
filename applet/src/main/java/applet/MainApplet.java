@@ -159,9 +159,10 @@ public class MainApplet extends Applet implements MultiSelectable {
      * of the whole transaction is known, no reason to count and return its length
      */
     void ParseTransaction(short txindex) {
-        //skip over version
 
         boolean segwit = false;
+
+        //skip over version
         txindex += 4;
         inputs = GetLength(txindex);
         txindex += offsetChange;
@@ -248,12 +249,10 @@ public class MainApplet extends Applet implements MultiSelectable {
 
             //map separator check
             if (keylen != 0) {
-                //DECIDE
-                short todo = 4;
 
                 //New should be called in constructor only, but in this case, we do not know the sizes
                 //ahead of time
-                //Byte arrays for storing processed data, messy but OOP design is not recommended in slides
+                //Byte array for storing processed data, messy but OOP design is not recommended in slides
                 byte[] key = new byte[keylen];
                 Util.arrayCopyNonAtomic(psbt, (short) (currentArrayIndex + 1), key, (short) 0, keylen);
                 currentArrayIndex += keylen;
